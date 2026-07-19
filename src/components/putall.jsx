@@ -6,7 +6,7 @@ Command: npx gltfjsx@6.5.3 public/models/2books.glb -o src/components/putall.jsx
 import React, { Suspense, useEffect, useLayoutEffect, useRef } from 'react'
 import * as THREE from 'three'
 import { useGraph } from '@react-three/fiber'
-import { useGLTF, useAnimations, useTexture, useVideoTexture } from '@react-three/drei'
+import { useGLTF, useAnimations, useTexture, useVideoTexture, Text, Float } from '@react-three/drei'
 import { SkeletonUtils } from 'three-stdlib'
 import useStore from '../store/useStore'
 
@@ -44,7 +44,7 @@ export function Model(props) {
   const lampOn = useStore((s) => s.lampOn)
   const toggleLamp = useStore((s) => s.toggleLamp)
   const dayMode = useStore((s) => s.dayMode)
-
+  const toggleAboutText = useStore((s) => s.toggleAboutText)
   // Laptop open/close
   const hasMounted = useRef(false)
   useLayoutEffect(() => {
@@ -171,8 +171,15 @@ export function Model(props) {
           scale={0.316}
           onPointerOver={() => setHovered('frame')}
           onPointerOut={() => setHovered(null)}
-          onClick={(e) => { e.stopPropagation(); setView('frame') }}
-        >
+          onClick={(e) => { 
+            e.stopPropagation(); 
+            if (viewState === 'frame') {
+              toggleAboutText();
+            } else {
+              setView('frame');
+            }
+          }}
+          >
           <mesh
             name="Cube005"
             geometry={nodes.Cube005.geometry}

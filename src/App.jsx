@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Suspense } from 'react'
+import { Loader } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import { Model } from './components/putall'
 import CameraController from './components/CameraController'
 import ErrorBoundary from './ErrorBoundary'
 import LaptopScreen from './screens/LaptopScreen'
 import useStore from './store/useStore'
+import { EffectComposer, Bloom } from '@react-three/postprocessing'
 
 export default function App() {
   const dotRef = useRef()
@@ -18,6 +20,7 @@ export default function App() {
   const turnPage = useStore((s) => s.turnPage)
   const dayMode = useStore((s) => s.dayMode)
   const toggleDayMode = useStore((s) => s.toggleDayMode)
+  const showAboutText = useStore((s) => s.showAboutText)
   const errRef = useRef()
   const [isMobile, setIsMobile] = useState(false)
 
@@ -105,13 +108,21 @@ export default function App() {
         id="cursor-dot"
         ref={dotRef}
         className={hovered ? 'hovered' : ''}
-        style={hovered && dayMode ? { borderColor: '#1a1a1a' } : undefined}
+        style={{
+          zIndex: 100000,
+          pointerEvents: 'none',
+          ...(hovered && dayMode ? { borderColor: '#1a1a1a' } : {})
+        }}
       />
       <div
         id="hover-label"
         ref={labelRef}
         className={hovered ? 'visible' : ''}
-        style={{ color: dayMode ? '#1a1a1a' : '#fff' }}
+        style={{ 
+          color: dayMode ? '#1a1a1a' : '#fff',
+          zIndex: 100000,
+          pointerEvents: 'none'
+        }}
       >
         {labels[hovered] || ''}
       </div>
@@ -173,7 +184,7 @@ export default function App() {
             fontFamily: "'Helvetihand', sans-serif",
             textShadow: dayMode ? 'none' : '0 1px 4px rgba(0,0,0,0.8)',
             maxWidth: 320,
-            opacity: isAnimating ? 0 : 1,
+            opacity: isAnimating || !showAboutText ? 0 : 1,
             transition: 'opacity 0.3s ease',
             pointerEvents: 'none',
           }}
@@ -194,18 +205,27 @@ export default function App() {
       )}
       <div style={{ width: '100vw', height: '100vh' }}>
         <ErrorBoundary>
-          <Canvas camera={{ fov: 60, position: [1.796, 2.418, 4.725] }}>
-            <color attach="background" args={[dayMode ? '#d6d6d6' : '#b0b0b0']} />
-            <ambientLight intensity={dayMode ? 1.2 : 0.6} />
-            <hemisphereLight intensity={dayMode ? 0.3 : 0.15} groundColor="#444444" />
-            <directionalLight position={[3, 3, 5]} intensity={dayMode ? 1.5 : 0.75} color="#ffffff" />
-            <directionalLight position={[-3, 2, -3]} intensity={dayMode ? 0.8 : 0.4} color="#ffffff" />
+      <Canvas camera={{ fov: 60, position: [1.796, 2.418, 4.725] }}>
+            <color attach="background" args={[dayMode ? '#ffcce6' : '#130914']} />
+          
+            <ambientLight intensity={dayMode ? 1.0 : 0.1} color="#ffffff" />
+            <hemisphereLight intensity={dayMode ? 0.3 : 0.1} groundColor="#444444" />
+            <directionalLight position={[3, 3, 5]} intensity={dayMode ? 1.0 : 0.2} color="#ffffff" />
+            <directionalLight position={[-3, 2, -3]} intensity={dayMode ? 0.5 : 0.1} color="#ffffff" />
             <pointLight position={[1.7, 1.8, -1.3]} intensity={dayMode ? 4 : 0} distance={0} decay={0} color="#ffffff" />
+            
             <CameraController />
-            <Model />
+            <Suspense fallback={null}>
+              <Model />
+            </Suspense>
+
+            <EffectComposer disableNormalPass>
+              <Bloom luminanceThreshold={1} luminanceSmoothing={0.1} intensity={1.5} mipmapBlur />
+            </EffectComposer>
           </Canvas>
         </ErrorBoundary>
       </div>
+      <Loader />
     </>
   )
 }

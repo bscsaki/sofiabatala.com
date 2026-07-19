@@ -9,10 +9,11 @@ const useStore = create((set, get) => ({
   weatherData: null,
   openApp: null,
   dayMode: false,
-
-  setView: (name) => {
-    if (get().isAnimating) return
-    set({ viewState: name, isAnimating: true })
+  showAboutText: true,
+  toggleAboutText: () => set((state) => ({ showAboutText: !state.showAboutText })),
+setView: (name) => {
+    if (get().viewState === name) return
+    set({ viewState: name, isAnimating: true, showAboutText: true })
   },
   setOpenApp: (id) => set({ openApp: id }),
   setHovered: (name) => set({ hovered: name }),

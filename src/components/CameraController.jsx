@@ -6,18 +6,27 @@ import useStore from '../store/useStore'
 
 const tempPos = new THREE.Vector3()
 const tempTarget = new THREE.Vector3()
-const currentTarget = new THREE.Vector3()
+const currentTarget = new THREE.Vector3(...cameraTargets.overview.target)
 
 export default function CameraController() {
   const { camera } = useThree()
   const viewState = useStore((s) => s.viewState)
   const setIsAnimating = useStore((s) => s.setIsAnimating)
   const arrived = useRef(false)
+  const firstFrame = useRef(true) 
 
   useFrame(() => {
     const t = cameraTargets[viewState] || cameraTargets.overview
     tempPos.set(...t.position)
     tempTarget.set(...t.target)
+
+    if (firstFrame.current) {
+      camera.position.copy(tempPos)
+      currentTarget.copy(tempTarget)
+      camera.fov = t.fov || 60
+      camera.updateProjectionMatrix()
+      firstFrame.current = false
+    }
 
     camera.up.set(0, 1, 0)
     camera.position.lerp(tempPos, 0.03)
