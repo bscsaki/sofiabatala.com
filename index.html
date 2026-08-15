@@ -5,6 +5,54 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>portfolio</title>
+    <script>
+      // rAF resilience: some environments (occluded windows, remote panes)
+      // throttle requestAnimationFrame to zero, freezing the whole scene.
+      // Race the native rAF against a timer fallback so animation never stalls.
+      ;(function () {
+        var native = window.requestAnimationFrame.bind(window)
+        window.requestAnimationFrame = function (cb) {
+          var done = false
+          var timer = setTimeout(function () {
+            if (done) return
+            done = true
+            cb(performance.now())
+          }, 55)
+          native(function (t) {
+            if (done) return
+            done = true
+            clearTimeout(timer)
+            cb(t)
+          })
+          return timer
+        }
+        window.cancelAnimationFrame = function (id) {
+          clearTimeout(id)
+        }
+      })()
+      // ResizeObserver resilience: RO callbacks are delivered before paint, so a
+      // never-painting environment starves them and the 3D canvas never sizes.
+      // Deliver one synthetic initial measurement per observed element; native
+      // callbacks still flow through when the compositor is healthy.
+      ;(function () {
+        var Native = window.ResizeObserver
+        if (!Native) return
+        window.ResizeObserver = function (callback) {
+          var ro = new Native(callback)
+          var origObserve = ro.observe.bind(ro)
+          ro.observe = function (el, opts) {
+            origObserve(el, opts)
+            setTimeout(function () {
+              var rect = el.getBoundingClientRect()
+              if (rect.width || rect.height) {
+                callback([{ target: el, contentRect: rect, borderBoxSize: [{ inlineSize: rect.width, blockSize: rect.height }], contentBoxSize: [{ inlineSize: rect.width, blockSize: rect.height }] }], ro)
+              }
+            }, 60)
+          }
+          return ro
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
